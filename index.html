@@ -1,0 +1,2121 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#3C4852">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="logo.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RadaDigital — Gestión Portuaria</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+    <style>
+        :root {
+            --brand-cream: #D9D7C4;
+            --brand-cream-bright: #EBE9DC;
+            --brand-cream-muted: #9A9890;
+            --brand-charcoal: #3C4852;
+            --brand-charcoal-deep: #2F383F;
+            --brand-bg: #0f1419;
+            --brand-bg-elevated: #161e26;
+            --brand-bg-surface: #1e2832;
+            --brand-bg-card: #1a232c;
+            --brand-border: #3d4f5c;
+            --brand-border-subtle: #2a3844;
+            --accent-teal: #4ECDC4;
+            --accent-teal-dim: #2a9d8f;
+            --accent-gold: #F4C95D;
+            --accent-coral: #FF8A7A;
+            --accent-sky: #6BB5FF;
+            --accent-violet: #A78BFA;
+            --accent-lime: #A8E06C;
+            --gradient-brand: linear-gradient(135deg, var(--accent-teal-dim) 0%, var(--brand-charcoal) 45%, #1a3a4a 100%);
+            --gradient-hero: radial-gradient(ellipse 80% 60% at 50% -10%, rgba(78, 205, 196, 0.18) 0%, transparent 55%),
+                radial-gradient(ellipse 50% 40% at 100% 50%, rgba(107, 181, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(ellipse 40% 30% at 0% 80%, rgba(244, 201, 93, 0.08) 0%, transparent 45%);
+        }
+        html, body { height: 100%; }
+        body {
+            background-color: var(--brand-bg);
+            background-image: var(--gradient-hero);
+            background-attachment: fixed;
+            color: #E8EEF2;
+        }
+        .logo-shell {
+            background: var(--brand-charcoal);
+            border: 1px solid var(--accent-teal);
+        }
+        .logo-shell img { mix-blend-mode: screen; }
+        .text-brand { color: var(--brand-cream); }
+        .text-accent-teal { color: var(--accent-teal); }
+        .text-accent-gold { color: var(--accent-gold); }
+        .text-accent-sky { color: var(--accent-sky); }
+        .text-accent-coral { color: var(--accent-coral); }
+        .text-accent-violet { color: var(--accent-violet); }
+        .text-brand-muted { color: var(--brand-cream-muted); }
+        .border-brand { border-color: var(--brand-border); }
+        .bg-brand-elevated { background-color: var(--brand-bg-elevated); }
+        .bg-brand-card { background-color: var(--brand-bg-card); }
+        .bg-brand-surface { background-color: var(--brand-bg-surface); }
+        .header-bar {
+            background: linear-gradient(90deg, var(--brand-bg-elevated) 0%, color-mix(in srgb, var(--accent-teal-dim) 12%, var(--brand-bg-elevated)) 100%);
+            border-bottom: 1px solid var(--brand-border);
+            box-shadow: 0 1px 0 color-mix(in srgb, var(--accent-teal) 25%, transparent);
+        }
+        .titulo-marca {
+            background: linear-gradient(90deg, var(--brand-cream-bright), var(--accent-teal));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        .metric-card {
+            background: var(--brand-bg-card);
+            border: 1px solid var(--brand-border);
+            border-radius: 0.75rem;
+            padding: 1rem;
+            position: relative;
+            overflow: hidden;
+        }
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+        }
+        .metric-card--gold::before { background: linear-gradient(90deg, var(--accent-gold), var(--accent-coral)); }
+        .metric-card--teal::before { background: linear-gradient(90deg, var(--accent-teal), var(--accent-sky)); }
+        .metric-card--muted::before { background: linear-gradient(90deg, var(--brand-cream-muted), var(--brand-charcoal)); }
+        .metric-card--sky::before { background: linear-gradient(90deg, var(--accent-sky), var(--accent-violet)); }
+        .card-panel {
+            background: linear-gradient(160deg, color-mix(in srgb, var(--brand-bg-card) 92%, var(--accent-teal-dim)) 0%, var(--brand-bg-card) 100%);
+            border: 1px solid var(--brand-border);
+            border-radius: 0.75rem;
+        }
+        .card-panel-header {
+            background: color-mix(in srgb, var(--accent-teal-dim) 14%, var(--brand-bg-elevated));
+            border-bottom: 1px solid var(--brand-border);
+        }
+        .input-brand {
+            width: 100%;
+            background: var(--brand-bg-surface);
+            border: 1px solid var(--brand-border);
+            border-radius: 0.75rem;
+            padding: 0.75rem 1rem;
+            color: #E8EEF2;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .input-brand:focus {
+            border-color: var(--accent-teal);
+            box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-teal) 22%, transparent);
+        }
+        .btn-primary {
+            background: var(--gradient-brand);
+            color: #0f1419;
+            border: 1px solid var(--accent-teal);
+            font-weight: 700;
+            transition: transform 0.15s, filter 0.2s, box-shadow 0.2s;
+        }
+        .btn-primary:hover {
+            filter: brightness(1.12);
+            box-shadow: 0 4px 20px color-mix(in srgb, var(--accent-teal) 35%, transparent);
+        }
+        .btn-primary:active { transform: scale(0.98); }
+        .btn-ghost {
+            border: 1px solid var(--accent-teal);
+            color: var(--accent-teal);
+            background: color-mix(in srgb, var(--accent-teal) 8%, transparent);
+            transition: background 0.2s, border-color 0.2s, color 0.2s;
+        }
+        .btn-ghost:hover {
+            background: color-mix(in srgb, var(--accent-teal) 18%, transparent);
+            border-color: var(--accent-teal);
+            color: var(--brand-cream-bright);
+        }
+        .btn-campo {
+            min-height: 5.5rem;
+            border-width: 3px;
+            border-style: solid;
+            border-radius: 1rem;
+            font-size: 1.125rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            touch-action: manipulation;
+            transition: transform 0.15s, filter 0.2s;
+        }
+        .btn-campo:active:not(:disabled) { transform: scale(0.98); }
+        .btn-campo-activo {
+            background: var(--gradient-brand);
+            color: #0f1419;
+            border-color: var(--accent-teal);
+        }
+        .btn-campo-activo:hover { filter: brightness(1.1); }
+        .btn-campo-inactivo {
+            background: var(--brand-bg-surface);
+            color: var(--brand-cream-muted);
+            border-color: var(--brand-border);
+            opacity: 0.55;
+            cursor: not-allowed;
+        }
+        .estado-pendiente {
+            background: color-mix(in srgb, var(--accent-gold) 22%, transparent);
+            color: var(--accent-gold);
+            border-color: color-mix(in srgb, var(--accent-gold) 45%, transparent);
+        }
+        .estado-en-curso {
+            background: color-mix(in srgb, var(--accent-teal) 20%, transparent);
+            color: var(--accent-teal);
+            border-color: color-mix(in srgb, var(--accent-teal) 45%, transparent);
+        }
+        .estado-finalizado {
+            background: color-mix(in srgb, var(--accent-violet) 12%, transparent);
+            color: var(--accent-violet);
+            border-color: color-mix(in srgb, var(--accent-violet) 30%, transparent);
+        }
+        .vista-operativo-activa { overflow: hidden; }
+        .vista-operativo-activa #app-principal { height: 100%; display: flex; flex-direction: column; }
+        @supports (padding: env(safe-area-inset-top)) {
+            .vista-operativo-shell { padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
+        }
+        .modal-backdrop { background: rgba(8, 12, 16, 0.88); backdrop-filter: blur(6px); }
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.25rem 0.65rem;
+            border-radius: 9999px;
+            font-size: 0.7rem;
+            border: 1px solid var(--brand-border);
+            background: var(--brand-bg-surface);
+            transition: border-color 0.2s, background 0.2s;
+        }
+        .chip:has(:checked) {
+            border-color: var(--accent-coral);
+            background: color-mix(in srgb, var(--accent-coral) 15%, var(--brand-bg-surface));
+            color: var(--accent-coral);
+        }
+        .lista-config li {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5rem;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--brand-border-subtle);
+        }
+        .lista-config li:last-child { border-bottom: none; }
+        .login-demo span:nth-of-type(1) { color: var(--accent-sky); }
+        .login-demo span:nth-of-type(2) { color: var(--accent-teal); }
+        .login-demo span:nth-of-type(3) { color: var(--accent-gold); }
+        .tag-tipo {
+            background: color-mix(in srgb, var(--accent-sky) 14%, transparent);
+            color: var(--accent-sky);
+            border-color: color-mix(in srgb, var(--accent-sky) 35%, transparent);
+        }
+        .toast-ok {
+            background: color-mix(in srgb, var(--accent-teal) 18%, var(--brand-bg-surface));
+            border-color: var(--accent-teal);
+            color: var(--accent-teal);
+        }
+        .vessel-search-wrap { position: relative; }
+        .ais-radar-en-vivo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--accent-lime);
+        }
+        .ais-radar-en-vivo::before {
+            content: '';
+            width: 0.55rem;
+            height: 0.55rem;
+            border-radius: 50%;
+            background: var(--accent-lime);
+            box-shadow: 0 0 8px var(--accent-lime);
+            animation: ais-radar-pulse 1.2s ease-in-out infinite;
+        }
+        @keyframes ais-radar-pulse {
+            0%, 100% { opacity: 0.45; transform: scale(0.9); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
+        .ais-dropdown {
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: calc(100% + 4px);
+            z-index: 40;
+            max-height: min(18rem, 50vh);
+            overflow-y: auto;
+            background: var(--brand-bg-elevated);
+            border: 1px solid var(--accent-teal);
+            border-radius: 0.75rem;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55);
+        }
+        .ais-result {
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+            width: 100%;
+            min-height: 3.25rem;
+            padding: 0.85rem 1rem;
+            text-align: left;
+            border: none;
+            border-bottom: 1px solid var(--brand-border-subtle);
+            background: transparent;
+            color: #E8EEF2;
+            cursor: pointer;
+            touch-action: manipulation;
+            transition: background 0.15s;
+        }
+        .ais-result:last-child { border-bottom: none; }
+        .ais-result:hover,
+        .ais-result:focus-visible {
+            background: color-mix(in srgb, var(--accent-teal) 14%, var(--brand-bg-surface));
+            outline: none;
+        }
+        .ais-result-name { font-weight: 700; font-size: 1rem; color: var(--brand-cream-bright); }
+        .ais-result-meta { font-size: 0.75rem; color: var(--brand-cream-muted); }
+        .ais-result-meta strong { color: var(--accent-sky); font-weight: 600; }
+        .ais-empty {
+            padding: 1rem;
+            font-size: 0.85rem;
+            color: var(--accent-gold);
+            text-align: center;
+        }
+        .barco-chip {
+            margin-top: 0.65rem;
+            padding: 0.65rem 0.85rem;
+            border-radius: 0.65rem;
+            border: 1px solid color-mix(in srgb, var(--accent-teal) 45%, transparent);
+            background: color-mix(in srgb, var(--accent-teal) 10%, var(--brand-bg-surface));
+            font-size: 0.75rem;
+            line-height: 1.45;
+        }
+        .barco-chip dt { color: var(--brand-cream-muted); display: inline; }
+        .barco-chip dd { display: inline; color: var(--accent-teal); margin-right: 0.65rem; }
+        .btn-ver-mapa {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.5rem 0.85rem;
+            border-radius: 0.65rem;
+            border: 1px solid var(--accent-gold);
+            background: color-mix(in srgb, var(--accent-gold) 12%, transparent);
+            color: var(--accent-gold);
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-decoration: none;
+            touch-action: manipulation;
+            transition: background 0.2s, color 0.2s;
+        }
+        .btn-ver-mapa:hover {
+            background: color-mix(in srgb, var(--accent-gold) 22%, transparent);
+            color: var(--brand-cream-bright);
+        }
+        .btn-mapa-ubicacion {
+            min-height: 3rem;
+            padding: 0.75rem 1rem;
+            border-radius: 0.75rem;
+            border: 2px solid var(--accent-sky);
+            background: color-mix(in srgb, var(--accent-sky) 12%, var(--brand-bg-surface));
+            color: var(--accent-sky);
+            font-size: 0.95rem;
+            font-weight: 700;
+            width: 100%;
+            touch-action: manipulation;
+            transition: background 0.2s, transform 0.15s;
+        }
+        .btn-mapa-ubicacion:hover { background: color-mix(in srgb, var(--accent-sky) 22%, var(--brand-bg-surface)); }
+        .btn-mapa-ubicacion:active { transform: scale(0.98); }
+        .mapa-operativo-panel {
+            margin-left: -1.25rem;
+            margin-right: -1.25rem;
+            width: calc(100% + 2.5rem);
+        }
+        .mapa-barco-preview {
+            width: 100%;
+            height: 320px;
+            margin-top: 0.75rem;
+            border-radius: 0.75rem;
+            border: 1px solid var(--brand-border);
+            overflow: hidden;
+        }
+        .mapa-radar-leyenda {
+            margin-top: 0.35rem;
+            font-size: 0.7rem;
+            color: var(--brand-cream-muted);
+            text-align: center;
+        }
+        .mapa-operativo {
+            width: 100%;
+            height: 300px;
+            border-top: 1px solid var(--brand-border);
+            border-bottom: 1px solid var(--brand-border);
+            background: var(--brand-bg-surface);
+            z-index: 1;
+        }
+        .mapa-operativo-panel .link-google-maps {
+            display: block;
+            text-align: center;
+            padding: 0.65rem 1rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--accent-gold);
+            text-decoration: underline;
+            text-underline-offset: 3px;
+            background: var(--brand-bg-elevated);
+            border-bottom: 1px solid var(--brand-border-subtle);
+        }
+        .mapa-operativo-panel .link-google-maps:hover { color: var(--brand-cream-bright); }
+        .mapa-operativo-leyenda {
+            padding: 0.5rem 1.25rem;
+            font-size: 0.7rem;
+            color: var(--brand-cream-muted);
+            text-align: center;
+        }
+        .marcador-barco-wrap { background: none !important; border: none !important; }
+        .marcador-barco {
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.65));
+            transform-origin: center center;
+            transition: filter 0.2s;
+        }
+        .marcador-barco--seleccionado {
+            filter: drop-shadow(0 0 8px rgba(255, 0, 255, 0.85)) drop-shadow(0 2px 6px rgba(0, 0, 0, 0.65));
+        }
+        .marcador-barco svg { width: 30px; height: 30px; display: block; }
+        .leaflet-container { font-family: inherit; background: #0f1419; }
+    </style>
+</head>
+<body class="min-h-screen font-sans antialiased">
+
+    <!-- Login por email -->
+    <div id="pantalla-login" class="min-h-screen flex flex-col items-center justify-center px-6 py-12">
+        <div class="w-full max-w-md space-y-8">
+            <div class="text-center space-y-4">
+                <div class="logo-shell mx-auto w-24 h-24 rounded-2xl flex items-center justify-center p-3">
+                    <img src="logo.png" alt="RadaDigital" class="w-full h-full object-contain" width="96" height="96">
+                </div>
+                <div>
+                    <h1 class="text-3xl font-bold titulo-marca tracking-tight">RadaDigital</h1>
+                    <p class="text-accent-teal text-sm mt-1 font-medium">Plataforma de gestión portuaria</p>
+                </div>
+            </div>
+            <form id="form-login" class="space-y-4">
+                <div>
+                    <label for="input-email" class="block text-xs font-medium text-brand-muted uppercase tracking-wider mb-2">Correo corporativo</label>
+                    <input id="input-email" type="email" required autocomplete="email" placeholder="tu@empresa.com" class="input-brand">
+                </div>
+                <p id="login-error" class="hidden text-sm text-rose-400 text-center"></p>
+                <button type="submit" class="btn-primary w-full py-3.5 rounded-xl text-base">Ingresar</button>
+            </form>
+            <p class="text-center text-xs text-brand-muted leading-relaxed login-demo">
+                Demo: <span>admin@radadigital.com</span> ·
+                <span>patron@radadigital.com</span> ·
+                <span>marinero@radadigital.com</span>
+            </p>
+        </div>
+    </div>
+
+    <div id="app-principal" class="hidden min-h-screen flex flex-col">
+
+        <header id="header-principal" class="shrink-0 header-bar px-4 sm:px-6 py-3.5 flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center gap-3 min-w-0">
+                <div class="logo-shell h-9 w-9 rounded-lg flex items-center justify-center p-1 shrink-0">
+                    <img src="logo.png" alt="" class="h-full w-full object-contain" width="36" height="36">
+                </div>
+                <div class="min-w-0">
+                    <h1 class="text-base sm:text-lg font-bold titulo-marca truncate">RadaDigital</h1>
+                    <p id="header-usuario" class="text-xs text-accent-teal truncate">—</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2 sm:gap-3">
+                <button id="btn-configuracion" type="button" class="hidden btn-ghost text-xs px-3 py-1.5 rounded-lg">Configuración</button>
+                <button id="btn-cerrar-sesion" type="button" class="text-xs text-brand-muted hover:text-brand underline underline-offset-2">Salir</button>
+            </div>
+        </header>
+
+        <!-- Vista Administrador: tablero + formulario -->
+        <main id="vista-admin" class="hidden flex-1 p-4 sm:p-6 max-w-6xl w-full mx-auto space-y-6 overflow-y-auto">
+            <section class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div class="metric-card metric-card--gold">
+                    <p class="text-[10px] text-brand-muted uppercase tracking-wider">Pendientes</p>
+                    <p id="metric-pendientes" class="text-2xl font-bold text-accent-gold mt-1">0</p>
+                </div>
+                <div class="metric-card metric-card--teal">
+                    <p class="text-[10px] text-brand-muted uppercase tracking-wider">En curso</p>
+                    <p id="metric-en-curso" class="text-2xl font-bold text-accent-teal mt-1">0</p>
+                </div>
+                <div class="metric-card metric-card--muted">
+                    <p class="text-[10px] text-brand-muted uppercase tracking-wider">Finalizados</p>
+                    <p id="metric-finalizados" class="text-2xl font-bold text-accent-violet mt-1">0</p>
+                </div>
+                <div class="metric-card metric-card--sky">
+                    <p class="text-[10px] text-brand-muted uppercase tracking-wider">Flota activa</p>
+                    <p id="metric-flota" class="text-2xl font-bold text-accent-sky mt-1">0</p>
+                </div>
+            </section>
+
+            <section class="card-panel p-5 sm:p-6 space-y-4">
+                <h2 class="text-lg font-semibold text-accent-teal">Nuevo servicio</h2>
+                <form id="form-nuevo-servicio" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="sm:col-span-2 vessel-search-wrap" id="wrap-busqueda-barco">
+                        <label for="input-barco" class="block text-xs text-brand-muted uppercase tracking-wider mb-1.5">
+                            Barco
+                            <span id="barcos-zona-contador" class="normal-case text-accent-lime font-semibold ml-1">(0 barcos en zona)</span>
+                        </label>
+                        <input id="input-barco" name="referencia" type="text" required
+                            autocomplete="off" spellcheck="false"
+                            placeholder="Escribí el nombre del buque…"
+                            class="input-brand text-sm">
+                        <p id="ais-radar-estado" class="ais-radar-en-vivo hidden" role="status" aria-live="polite">📡 RADAR EN VIVO</p>
+                        <p id="ais-aviso-manual" class="hidden text-xs text-accent-gold mt-2"></p>
+                        <div id="ais-dropdown" class="ais-dropdown hidden" role="listbox" aria-label="Resultados de buques"></div>
+                        <dl id="barco-seleccionado-resumen" class="barco-chip hidden"></dl>
+                        <div id="mapa-barco-preview" class="hidden">
+                            <div id="mapa-barco-seleccion" class="mapa-barco-preview" role="img" aria-label="Radar AIS en vivo"></div>
+                            <p id="mapa-radar-leyenda" class="mapa-radar-leyenda">Radar AIS — seleccioná un buque para seguimiento automático</p>
+                        </div>
+                    </div>
+                    <div>
+                        <label for="input-latitud" class="block text-xs text-brand-muted uppercase tracking-wider mb-1.5">Latitud</label>
+                        <input id="input-latitud" name="latitud" type="text" readonly
+                            placeholder="—" class="input-brand text-sm bg-brand-elevated/50">
+                    </div>
+                    <div>
+                        <label for="input-longitud" class="block text-xs text-brand-muted uppercase tracking-wider mb-1.5">Longitud</label>
+                        <input id="input-longitud" name="longitud" type="text" readonly
+                            placeholder="—" class="input-brand text-sm bg-brand-elevated/50">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-brand-muted uppercase tracking-wider mb-1.5">Lancha</label>
+                        <select name="lancha" id="select-lancha" required class="input-brand text-sm"></select>
+                    </div>
+                    <div>
+                        <label class="block text-xs text-brand-muted uppercase tracking-wider mb-1.5">Tipo de servicio</label>
+                        <select name="tipoServicio" id="select-tipo-servicio" required class="input-brand text-sm"></select>
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label class="block text-xs text-brand-muted uppercase tracking-wider mb-1.5">Personal asignado</label>
+                        <div id="checkbox-personal" class="flex flex-wrap gap-2"></div>
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label class="block text-xs text-brand-muted uppercase tracking-wider mb-1.5">Notas (opcional)</label>
+                        <textarea name="notas" rows="2" placeholder="Muelle 3, práctico a bordo…" class="input-brand text-sm resize-none"></textarea>
+                    </div>
+                    <div class="sm:col-span-2">
+                        <button type="submit" class="btn-primary w-full sm:w-auto px-8 py-3 rounded-xl text-sm">Cargar al tablero</button>
+                    </div>
+                </form>
+            </section>
+
+            <section class="card-panel overflow-hidden">
+                <div class="px-5 py-4 card-panel-header flex justify-between items-center">
+                    <h2 class="font-semibold text-accent-sky">Tablero de servicios</h2>
+                    <span id="contador-tablero" class="text-xs text-accent-gold font-medium">0 servicios</span>
+                </div>
+                <div id="lista-tablero" class="divide-y divide-[var(--brand-border-subtle)]"></div>
+            </section>
+        </main>
+
+        <!-- Vista Personal operativo: tareas asignadas, botones grandes -->
+        <main id="vista-operativo" class="hidden fixed inset-0 z-30 bg-[var(--brand-bg)] vista-operativo-shell flex flex-col">
+            <div class="shrink-0 px-4 py-3 header-bar flex items-center justify-between gap-3">
+                <div class="min-w-0">
+                    <p class="text-[10px] uppercase tracking-widest text-accent-coral font-semibold">Mis tareas</p>
+                    <p id="operativo-subtitulo" class="text-sm font-bold text-accent-teal truncate">—</p>
+                </div>
+                <button type="button" id="btn-cerrar-sesion-operativo" class="text-xs text-brand-muted hover:text-brand underline shrink-0">Salir</button>
+            </div>
+            <div id="lista-tareas-operativo" class="flex-1 overflow-y-auto px-4 py-4 space-y-4"></div>
+        </main>
+
+        <footer id="footer-principal" class="shrink-0 header-bar py-3 px-4 text-center text-[10px] text-brand-muted hidden sm:block">
+            <span class="text-accent-teal font-medium">RadaDigital</span> SaaS · Datos locales · Listo para API WhatsApp
+        </footer>
+    </div>
+
+    <!-- Modal Configuración (solo Admin) -->
+    <div id="modal-config" class="hidden fixed inset-0 z-50 modal-backdrop flex items-end sm:items-center justify-center p-0 sm:p-4">
+        <div class="card-panel w-full sm:max-w-lg max-h-[90vh] overflow-hidden rounded-t-2xl sm:rounded-2xl flex flex-col">
+            <div class="px-5 py-4 card-panel-header flex justify-between items-center shrink-0">
+                <h2 class="font-semibold text-accent-violet">Configuración de empresa</h2>
+                <button type="button" id="btn-cerrar-config" class="text-brand-muted hover:text-brand text-xl leading-none px-2" aria-label="Cerrar">×</button>
+            </div>
+            <div class="overflow-y-auto p-5 space-y-6 flex-1">
+                <div>
+                    <label class="block text-xs text-brand-muted uppercase tracking-wider mb-1.5">Nombre de la empresa</label>
+                    <input id="config-nombre-empresa" type="text" class="input-brand text-sm">
+                </div>
+                <div>
+                    <p class="text-xs text-brand-muted uppercase tracking-wider mb-2">Flota (lanchas)</p>
+                    <ul id="lista-flota" class="lista-config mb-2"></ul>
+                    <form id="form-agregar-lancha" class="flex gap-2">
+                        <input name="nombre" required placeholder="Nueva lancha" class="input-brand text-sm flex-1">
+                        <button type="submit" class="btn-ghost px-4 py-2 rounded-lg text-sm shrink-0">+</button>
+                    </form>
+                </div>
+                <div>
+                    <p class="text-xs text-brand-muted uppercase tracking-wider mb-2">Personal</p>
+                    <ul id="lista-staff" class="lista-config mb-2 text-sm"></ul>
+                    <form id="form-agregar-staff" class="space-y-2">
+                        <input name="nombre" required placeholder="Nombre" class="input-brand text-sm">
+                        <input name="email" type="email" required placeholder="email@empresa.com" class="input-brand text-sm">
+                        <input name="telefono" type="tel" placeholder="+54 11 …" class="input-brand text-sm">
+                        <select name="rol" class="input-brand text-sm">
+                            <option value="Administrativo">Administrativo</option>
+                            <option value="Patrón">Patrón</option>
+                            <option value="Marinero">Marinero</option>
+                        </select>
+                        <button type="submit" class="btn-ghost w-full py-2 rounded-lg text-sm">Agregar personal</button>
+                    </form>
+                </div>
+                <div>
+                    <p class="text-xs text-brand-muted uppercase tracking-wider mb-2">Catálogo de servicios</p>
+                    <ul id="lista-catalogo" class="lista-config mb-2"></ul>
+                    <form id="form-agregar-servicio-catalogo" class="flex gap-2">
+                        <input name="nombre" required placeholder="Ej: Amarre" class="input-brand text-sm flex-1">
+                        <button type="submit" class="btn-ghost px-4 py-2 rounded-lg text-sm shrink-0">+</button>
+                    </form>
+                </div>
+            </div>
+            <div class="px-5 py-4 border-t border-brand shrink-0">
+                <button type="button" id="btn-guardar-config" class="btn-primary w-full py-3 rounded-xl text-sm">Guardar cambios</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] hidden px-4 py-2.5 rounded-lg text-sm toast-ok border"></div>
+
+    <script>
+        const STORAGE_EMPRESA = 'radadigital-empresaData';
+        const STORAGE_SERVICIOS = 'radadigital-servicios';
+        const STORAGE_SESION = 'radadigital-sesion';
+
+        function urlWebSocketAis() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const host = window.location.hostname === 'localhost'
+                ? 'localhost:3000'
+                : window.location.hostname;
+            return `${protocol}//${host}/ws/ais`;
+        }
+        const AIS_STALE_MS = 10 * 60 * 1000;
+        const RADAR_MAP_CENTER = [-34.5, -58.0];
+        const RADAR_MAP_ZOOM = 10;
+        const ICONO_RADAR_FILL = '#00ffcc';
+        const ICONO_RADAR_STROKE = '#005544';
+        const ICONO_SEL_FILL = '#ff00ff';
+        const ICONO_SEL_STROKE = '#880088';
+        const BUSQUEDA_DEBOUNCE_MS = 300;
+        const BUSQUEDA_MIN_CHARS = 2;
+        const POSICION_REFRESH_MS = 30 * 1000;
+        const MAPA_TILE_URL = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
+        const MAPA_TILE_ATTRIB = '&copy; OpenStreetMap &copy; CARTO';
+
+        const NAV_STATUS_LABELS = {
+            0: 'En navegación (motor)',
+            1: 'Fondeado',
+            2: 'Sin comando',
+            3: 'Maniobrabilidad restringida',
+            4: 'Limitado por calado',
+            5: 'Amarrado',
+            6: 'Varado',
+            7: 'Pesca',
+            8: 'Bajo vela',
+            14: 'AIS-SART',
+            15: 'No definido'
+        };
+
+        let busquedaDebounceTimer = null;
+        let barcoSeleccionado = null;
+        let aisModoManual = false;
+        let aisSocket = null;
+        let aisReconnectTimer = null;
+        let buquesEnRadar = [];
+        const barcosEnVivoPorMmsi = new Map();
+        const markersDict = {};
+        let mapasOperativo = {};
+        let mapaBarcoAdmin = null;
+        let mapaAbiertoServicioId = null;
+        let posicionRefreshInterval = null;
+        let limpiezaRadarInterval = null;
+
+        const ESTADOS = {
+            PENDIENTE: 'pendiente',
+            EN_CURSO: 'en_curso',
+            FINALIZADO: 'finalizado'
+        };
+
+        const ETIQUETAS_ESTADO = {
+            pendiente: 'Pendiente',
+            en_curso: 'En Curso',
+            finalizado: 'Finalizado'
+        };
+
+        const ROLES_ADMIN = ['Administrativo'];
+        const ROLES_OPERATIVO = ['Patrón', 'Marinero'];
+
+        const empresaDataInicial = {
+            nombreEmpresa: 'RadaDigital',
+            flota: ['Fénix II', 'Albatros', 'Corsario'],
+            staff: [
+                { id: 's1', nombre: 'Admin Principal', email: 'admin@radadigital.com', telefono: '+5491112345678', rol: 'Administrativo' },
+                { id: 's2', nombre: 'Gómez M.', email: 'patron@radadigital.com', telefono: '+5491198765432', rol: 'Patrón', lanchaPreferida: 'Fénix II' },
+                { id: 's3', nombre: 'López R.', email: 'marinero@radadigital.com', telefono: '+5491155554444', rol: 'Marinero' },
+                { id: 's4', nombre: 'Benítez J.', email: 'benitez@radadigital.com', telefono: '+5491166667777', rol: 'Patrón', lanchaPreferida: 'Albatros' }
+            ],
+            catalogoServicios: ['Amarre', 'Traslado de Prácticos', 'Víveres', 'Desamarre', 'Lancha de recalada']
+        };
+
+        let empresaData = null;
+        let servicios = [];
+        let usuarioActual = null;
+
+        /* ——— Persistencia ——— */
+        function cargarEmpresaData() {
+            const raw = localStorage.getItem(STORAGE_EMPRESA);
+            if (raw) {
+                empresaData = JSON.parse(raw);
+                empresaData.flota = empresaData.flota || [];
+                empresaData.staff = empresaData.staff || [];
+                empresaData.catalogoServicios = empresaData.catalogoServicios || [];
+                if (empresaData.nombreEmpresa === 'Dock Sud Servicios') {
+                    empresaData.nombreEmpresa = 'RadaDigital';
+                    guardarEmpresaData();
+                }
+            } else {
+                empresaData = JSON.parse(JSON.stringify(empresaDataInicial));
+                guardarEmpresaData();
+            }
+        }
+
+        function guardarEmpresaData() {
+            localStorage.setItem(STORAGE_EMPRESA, JSON.stringify(empresaData));
+        }
+
+        function cargarServicios() {
+            const raw = localStorage.getItem(STORAGE_SERVICIOS);
+            servicios = raw ? JSON.parse(raw) : [];
+        }
+
+        function guardarServicios() {
+            localStorage.setItem(STORAGE_SERVICIOS, JSON.stringify(servicios));
+        }
+
+        /* ——— WhatsApp (stub para API futura) ——— */
+        function enviarNotificacionWhatsapp(telefono, mensaje) {
+            /* Integración futura:
+            return fetch('/api/whatsapp', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ telefono, mensaje })
+            });
+            */
+        }
+
+        function notificarPersonalAsignado(servicio) {
+            const emails = servicio.personalAsignado || [];
+            emails.forEach(email => {
+                const persona = empresaData.staff.find(s => s.email.toLowerCase() === email.toLowerCase());
+                if (!persona?.telefono) return;
+                const msg = `RadaDigital: Nuevo servicio "${servicio.tipoServicio}" — ${servicio.referencia}. Lancha: ${servicio.lancha}. Estado: Pendiente.`;
+                enviarNotificacionWhatsapp(persona.telefono, msg);
+            });
+        }
+
+        /* ——— Identificación ——— */
+        function normalizarEmail(email) {
+            return (email || '').trim().toLowerCase();
+        }
+
+        function buscarStaffPorEmail(email) {
+            return empresaData.staff.find(s => normalizarEmail(s.email) === normalizarEmail(email));
+        }
+
+        function esAdministrador(staff) {
+            return staff && ROLES_ADMIN.includes(staff.rol);
+        }
+
+        function esOperativo(staff) {
+            return staff && ROLES_OPERATIVO.includes(staff.rol);
+        }
+
+        function identificarUsuario(email) {
+            const staff = buscarStaffPorEmail(email);
+            if (!staff) return { ok: false, error: 'Correo no registrado en esta empresa.' };
+            if (!esAdministrador(staff) && !esOperativo(staff)) {
+                return { ok: false, error: 'Rol no habilitado para acceder.' };
+            }
+            return { ok: true, usuario: staff };
+        }
+
+        /* ——— UI helpers ——— */
+        function mostrarToast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.classList.remove('hidden');
+            clearTimeout(mostrarToast._tid);
+            mostrarToast._tid = setTimeout(() => t.classList.add('hidden'), 3200);
+        }
+
+        function claseEstado(estado) {
+            if (estado === ESTADOS.EN_CURSO) return 'estado-en-curso';
+            if (estado === ESTADOS.FINALIZADO) return 'estado-finalizado';
+            return 'estado-pendiente';
+        }
+
+        function badgeEstado(estado) {
+            return `<span class="text-xs px-2.5 py-1 rounded-full font-medium border ${claseEstado(estado)}">${ETIQUETAS_ESTADO[estado] || estado}</span>`;
+        }
+
+        function escHtml(str) {
+            const d = document.createElement('div');
+            d.textContent = str ?? '';
+            return d.innerHTML;
+        }
+
+        function uid() {
+            return 'id_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+        }
+
+        /* ——— AISstream.io: radar en vivo ——— */
+        function formatearEstadoNavegacion(val) {
+            if (val == null || val === '') return '—';
+            if (typeof val === 'string' && val.trim() && isNaN(Number(val))) return val.trim();
+            const n = Number(val);
+            return NAV_STATUS_LABELS[n] ?? `Código ${n}`;
+        }
+
+        function metaDeMensajeAis(raw) {
+            return raw.MetaData || raw.Metadata || raw.metadata || {};
+        }
+
+        function nombreBuqueDeFuentes(meta, body, prev) {
+            const fuentes = [
+                meta?.VesselName,
+                meta?.vessel_name,
+                meta?.vesselName,
+                meta?.ShipName,
+                meta?.ship_name,
+                meta?.shipName,
+                meta?.name,
+                body?.VesselName,
+                body?.vessel_name,
+                body?.vesselName,
+                body?.ShipName,
+                body?.ship_name,
+                prev?.VesselName,
+                prev?.nombre
+            ];
+            for (const valor of fuentes) {
+                const t = (valor ?? '').toString().trim();
+                if (t) return t;
+            }
+            return '';
+        }
+
+        function mmsiDeMensajeAis(meta, body) {
+            const candidato = meta.MMSI ?? meta.mmsi ?? body.UserID ?? body.userId ?? body.mmsi;
+            if (candidato == null || candidato === '') return null;
+            return String(candidato);
+        }
+
+        function barcoDesdeAisstream(mmsi, vesselName, latitude, longitude, status, sog, heading, course) {
+            const nombre = (vesselName || '').toString().trim() || `MMSI ${mmsi}`;
+            const rumbo = heading ?? course ?? null;
+            return {
+                mmsi: String(mmsi),
+                VesselName: nombre,
+                vesselName: nombre,
+                name: nombre,
+                nombre,
+                Latitude: latitude != null ? Number(latitude) : null,
+                Longitude: longitude != null ? Number(longitude) : null,
+                latitud: latitude != null ? Number(latitude) : null,
+                longitud: longitude != null ? Number(longitude) : null,
+                sog: sog != null ? Number(sog) : null,
+                heading: rumbo != null ? Number(rumbo) : null,
+                course: course != null ? Number(course) : (rumbo != null ? Number(rumbo) : null),
+                Status: formatearEstadoNavegacion(status),
+                estadoNavegacion: formatearEstadoNavegacion(status),
+                manual: false,
+                actualizadoEn: Date.now()
+            };
+        }
+
+        function parsearMensajeAisstream(raw) {
+            if (!raw || typeof raw !== 'object') return null;
+            if (raw.type === 'proxy_status') return null;
+            if (raw.error) return null;
+
+            if (raw.mmsi) {
+                const vesselName = raw.name || raw.vesselName || raw.vessel_name || raw.VesselName || '';
+                const lat = raw.latitude ?? raw.Latitude ?? null;
+                const lon = raw.longitude ?? raw.Longitude ?? null;
+                const sog = raw.sog ?? null;
+                const heading = raw.heading ?? raw.course ?? null;
+                const course = raw.course ?? raw.heading ?? null;
+                if (lat != null && lon != null) {
+                    return barcoDesdeAisstream(raw.mmsi, vesselName, lat, lon, raw.status, sog, heading, course);
+                }
+                const prev = barcosEnVivoPorMmsi.get(String(raw.mmsi));
+                if (vesselName || prev) {
+                    return barcoDesdeAisstream(
+                        raw.mmsi,
+                        vesselName,
+                        prev?.Latitude ?? lat,
+                        prev?.Longitude ?? lon,
+                        raw.status ?? prev?.Status,
+                        sog ?? prev?.sog,
+                        heading ?? prev?.heading,
+                        course ?? prev?.course
+                    );
+                }
+                return null;
+            }
+
+            const meta = metaDeMensajeAis(raw);
+            const msgType = raw.MessageType || raw.messageType;
+            const messageBag = raw.Message || raw.message || {};
+            const body = (msgType && messageBag[msgType]) || messageBag.PositionReport
+                || messageBag.ShipStaticData || messageBag.StandardClassBPositionReport
+                || messageBag.ExtendedClassBPositionReport || {};
+            const mmsi = mmsiDeMensajeAis(meta, body);
+            if (!mmsi) return null;
+
+            const prev = barcosEnVivoPorMmsi.get(mmsi);
+            const lat = meta.latitude ?? meta.Latitude ?? body.Latitude ?? body.latitude ?? prev?.Latitude ?? null;
+            const lon = meta.longitude ?? meta.Longitude ?? body.Longitude ?? body.longitude ?? prev?.Longitude ?? null;
+            const vesselName = nombreBuqueDeFuentes(meta, body, prev);
+            const status = body.NavigationalStatus ?? body.navigational_status
+                ?? meta.NavigationalStatus ?? meta.navigational_status ?? prev?.Status;
+            const sog = body.Sog ?? body.sog ?? meta.sog ?? prev?.sog ?? null;
+            const course = body.Cog ?? body.cog ?? meta.Cog ?? meta.cog ?? prev?.course ?? null;
+            const heading = body.TrueHeading ?? body.true_heading ?? body.Heading ?? body.heading
+                ?? meta.TrueHeading ?? meta.heading ?? course ?? prev?.heading ?? null;
+
+            if (lat == null || lon == null) {
+                if (!vesselName && !prev) return null;
+                return barcoDesdeAisstream(
+                    mmsi,
+                    vesselName,
+                    prev?.Latitude ?? null,
+                    prev?.Longitude ?? null,
+                    status,
+                    sog,
+                    heading,
+                    course
+                );
+            }
+            return barcoDesdeAisstream(mmsi, vesselName, lat, lon, status, sog, heading, course);
+        }
+
+        function actualizarContadorBarcosZona() {
+            const el = document.getElementById('barcos-zona-contador');
+            if (!el) return;
+            const n = buquesEnRadar.length;
+            el.textContent = `(${n} barco${n !== 1 ? 's' : ''} en zona)`;
+        }
+
+        function ingestarMensajeAisstream(raw) {
+            const barco = parsearMensajeAisstream(raw);
+            if (!barco || !barco.mmsi) return;
+            const prev = barcosEnVivoPorMmsi.get(barco.mmsi);
+            if (prev) {
+                const nombre = nombreBuqueDeFuentes(
+                    { VesselName: barco.VesselName, vesselName: barco.vesselName, name: barco.name, vessel_name: barco.vessel_name, ShipName: barco.ShipName },
+                    {},
+                    prev
+                );
+                if (nombre) {
+                    barco.VesselName = nombre;
+                    barco.vesselName = nombre;
+                    barco.name = nombre;
+                    barco.nombre = nombre;
+                } else if (prev.VesselName) {
+                    barco.VesselName = prev.VesselName;
+                    barco.vesselName = prev.vesselName ?? prev.VesselName;
+                    barco.name = prev.name ?? prev.VesselName;
+                    barco.nombre = prev.nombre;
+                }
+                if (barco.Latitude == null && prev.Latitude != null) {
+                    barco.Latitude = prev.Latitude;
+                    barco.latitud = prev.latitud;
+                }
+                if (barco.Longitude == null && prev.Longitude != null) {
+                    barco.Longitude = prev.Longitude;
+                    barco.longitud = prev.longitud;
+                }
+                if (barco.sog == null && prev.sog != null) barco.sog = prev.sog;
+                if (barco.heading == null && prev.heading != null) barco.heading = prev.heading;
+                if (barco.course == null && prev.course != null) barco.course = prev.course;
+            }
+            barcosEnVivoPorMmsi.set(barco.mmsi, barco);
+            buquesEnRadar = Array.from(barcosEnVivoPorMmsi.values());
+            actualizarContadorBarcosZona();
+            actualizarMarcadorRadar(barco);
+            if (barcoSeleccionado?.mmsi === barco.mmsi) {
+                barcoSeleccionado = { ...barcoSeleccionado, ...barco, nombre: barco.VesselName };
+                mostrarResumenBarco(barcoSeleccionado);
+                sincronizarCoordenadasFormulario(barcoSeleccionado);
+                if (mapaBarcoAdmin?.map) {
+                    mapaBarcoAdmin.map.panTo([barco.Latitude, barco.Longitude], { animate: true });
+                }
+            }
+            sincronizarBarcosEnServiciosActivos();
+        }
+
+        function sincronizarBarcosEnServiciosActivos() {
+            servicios
+                .filter(s => s.estado === ESTADOS.EN_CURSO && s.buque?.mmsi)
+                .forEach(s => {
+                    const live = barcosEnVivoPorMmsi.get(String(s.buque.mmsi));
+                    if (!live || live.Latitude == null) return;
+                    s.buque = {
+                        ...s.buque,
+                        nombre: live.VesselName,
+                        latitud: live.Latitude,
+                        longitud: live.Longitude,
+                        estadoNavegacion: live.Status,
+                        sog: live.sog,
+                        heading: live.heading ?? live.course,
+                        posicionActualizadaEn: live.actualizadoEn
+                    };
+                    if (mapasOperativo[s.id]) actualizarMapaOperativo(s.id);
+                });
+        }
+
+        function setAisRadarEnVivo(conectado) {
+            document.getElementById('ais-radar-estado').classList.toggle('hidden', !conectado);
+        }
+
+        function programarReconexionAis() {
+            clearTimeout(aisReconnectTimer);
+            aisReconnectTimer = setTimeout(() => {
+                if (usuarioActual) conectarAisstream();
+            }, 5000);
+        }
+
+        function desconectarAisstream() {
+            clearTimeout(aisReconnectTimer);
+            detenerLimpiezaRadar();
+            if (aisSocket) {
+                aisSocket.onopen = null;
+                aisSocket.onmessage = null;
+                aisSocket.onerror = null;
+                aisSocket.onclose = null;
+                if (aisSocket.readyState === WebSocket.OPEN || aisSocket.readyState === WebSocket.CONNECTING) {
+                    aisSocket.close();
+                }
+                aisSocket = null;
+            }
+            setAisRadarEnVivo(false);
+        }
+
+        function procesarMensaje(datos) {
+            if (datos == null) return;
+            const texto = typeof datos === 'string' ? datos : String(datos);
+            let data;
+            try {
+                data = JSON.parse(texto);
+            } catch {
+                return;
+            }
+            if (data.type === 'proxy_status') {
+                setAisRadarEnVivo(!!data.connected);
+                if (data.connected) {
+                    setAisAviso('');
+                    actualizarContadorBarcosZona();
+                    asegurarMapaRadarVisible();
+                    iniciarLimpiezaRadar();
+                } else {
+                    detenerLimpiezaRadar();
+                }
+                return;
+            }
+            ingestarMensajeAisstream(data);
+        }
+
+        function conectarAisstream() {
+            desconectarAisstream();
+            try {
+                aisSocket = new WebSocket(urlWebSocketAis());
+            } catch (err) {
+                setAisAviso('No se pudo abrir el WebSocket AIS. ¿Está corriendo el servidor?');
+                programarReconexionAis();
+                return;
+            }
+            aisSocket.onopen = () => {
+                setAisAviso('');
+            };
+            aisSocket.onmessage = (event) => {
+                if (event.data instanceof Blob) {
+                    event.data.text().then(text => procesarMensaje(text));
+                } else {
+                    procesarMensaje(event.data);
+                }
+            };
+            aisSocket.onerror = () => {
+                setAisRadarEnVivo(false);
+                setAisAviso('Sin conexión al servidor AIS. Ejecutá: cd server && npm start');
+            };
+            aisSocket.onclose = () => {
+                setAisRadarEnVivo(false);
+                aisSocket = null;
+                if (usuarioActual) programarReconexionAis();
+            };
+        }
+
+        function filtrarBarcosEnVivo(query) {
+            const q = (query || '').trim().toLowerCase();
+            if (q.length < BUSQUEDA_MIN_CHARS) return [];
+            if (/^\d{7,9}$/.test(q)) {
+                const exacto = barcosEnVivoPorMmsi.get(q);
+                return exacto ? [exacto] : buquesEnRadar.filter(b => b.mmsi.startsWith(q));
+            }
+            return buquesEnRadar
+                .filter(b => nombreBarcoParaBusqueda(b).toLowerCase().includes(q))
+                .sort((a, b) => nombreBarcoParaBusqueda(a).localeCompare(nombreBarcoParaBusqueda(b), 'es'));
+        }
+
+        function nombreBarcoParaBusqueda(barco) {
+            return (barco.VesselName || barco.vesselName || barco.name || barco.vessel_name || barco.nombre || barco.mmsi || '').toString();
+        }
+
+        function buscarBarcoEnVivo(query) {
+            return filtrarBarcosEnVivo(query).slice(0, 40);
+        }
+
+        function coordenadasBuque(buque) {
+            if (!buque) return null;
+            const latRaw = buque.latitud ?? buque.Latitude;
+            const lonRaw = buque.longitud ?? buque.Longitude;
+            if (latRaw == null || lonRaw == null) return null;
+            const lat = Number(latRaw);
+            const lon = Number(lonRaw);
+            if (Number.isNaN(lat) || Number.isNaN(lon)) return null;
+            return { lat, lon };
+        }
+
+        function urlGoogleMaps(lat, lon) {
+            return `https://www.google.com/maps/search/?api=1&query=${lat},${lon}`;
+        }
+
+        function botonVerEnMapa(buque) {
+            const coords = coordenadasBuque(buque);
+            if (!coords) return '';
+            return `<a class="btn-ver-mapa" href="${urlGoogleMaps(coords.lat, coords.lon)}" target="_blank" rel="noopener noreferrer">📍 Ver en Mapa</a>`;
+        }
+
+        function actualizarPosicionBuqueServicio(servicioId, opts = {}) {
+            const s = servicios.find(x => x.id === servicioId);
+            if (!s || s.estado !== ESTADOS.EN_CURSO) return false;
+            const buque = s.buque || { nombre: s.referencia };
+            const nombre = (buque.nombre || s.referencia || '').trim();
+            const match = buque.mmsi
+                ? barcosEnVivoPorMmsi.get(String(buque.mmsi))
+                : buquesEnRadar.find(b =>
+                    nombreBarcoParaBusqueda(b).toLowerCase() === nombre.toLowerCase());
+            if (!match || match.Latitude == null || match.Longitude == null) {
+                return false;
+            }
+            s.buque = {
+                ...buque,
+                nombre: match.VesselName || nombre,
+                mmsi: match.mmsi,
+                latitud: match.Latitude,
+                longitud: match.Longitude,
+                estadoNavegacion: match.Status,
+                posicionActualizadaEn: match.actualizadoEn || Date.now()
+            };
+            guardarServicios();
+            if (mapasOperativo[servicioId]) actualizarMapaOperativo(servicioId);
+            const link = document.querySelector(`#panel-mapa-${servicioId} .link-google-maps`);
+            if (link) link.href = urlGoogleMaps(match.Latitude, match.Longitude);
+            if (!opts.silencioso) mostrarToast('Posición del buque actualizada');
+            return true;
+        }
+
+        function iniciarRefreshPosicionesActivas() {
+            detenerRefreshPosicionesActivas();
+            if (!usuarioActual || esAdministrador(usuarioActual)) return;
+            posicionRefreshInterval = setInterval(() => {
+                serviciosAsignadosA(usuarioActual)
+                    .filter(s => s.estado === ESTADOS.EN_CURSO)
+                    .forEach(s => actualizarPosicionBuqueServicio(s.id, { silencioso: true }));
+            }, POSICION_REFRESH_MS);
+        }
+
+        function detenerRefreshPosicionesActivas() {
+            if (posicionRefreshInterval) {
+                clearInterval(posicionRefreshInterval);
+                posicionRefreshInterval = null;
+            }
+        }
+
+        function destruirMapasOperativo() {
+            Object.keys(mapasOperativo).forEach(id => {
+                const entry = mapasOperativo[id];
+                if (entry?.map) entry.map.remove();
+            });
+            mapasOperativo = {};
+            mapaAbiertoServicioId = null;
+        }
+
+        function rumboBarco(barco) {
+            const h = barco?.heading ?? barco?.course;
+            return h != null && !Number.isNaN(Number(h)) ? Number(h) : 0;
+        }
+
+        function crearIconoBarcoRadar(headingDeg, seleccionado) {
+            const fill = seleccionado ? ICONO_SEL_FILL : ICONO_RADAR_FILL;
+            const stroke = seleccionado ? ICONO_SEL_STROKE : ICONO_RADAR_STROKE;
+            const rot = rumboBarco({ heading: headingDeg });
+            const html = `<div class="marcador-barco marcador-barco--radar${seleccionado ? ' marcador-barco--seleccionado' : ''}" style="transform: rotate(${rot}deg)" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="30" height="30"><path d="M12,2L4.5,20.29L5.21,21L12,18L18.79,21L19.5,20.29L12,2Z" fill="${fill}" stroke="${stroke}" stroke-width="1"/></svg>
+            </div>`;
+            return L.divIcon({
+                className: 'marcador-barco-wrap',
+                html,
+                iconSize: [30, 30],
+                iconAnchor: [15, 15]
+            });
+        }
+
+        function crearIconoBarco(barco, seleccionado) {
+            return crearIconoBarcoRadar(rumboBarco(barco), seleccionado);
+        }
+
+        function formatSog(sog) {
+            if (sog == null || Number.isNaN(Number(sog))) return '—';
+            return `${Number(sog).toFixed(1)} nudos`;
+        }
+
+        function formatHoraReporte(ts) {
+            if (!ts) return '—';
+            return new Date(ts).toLocaleString('es-AR', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false
+            });
+        }
+
+        function contenidoPopupBarco(barco) {
+            const nombre = barco.VesselName || barco.nombre || barco.name || `MMSI ${barco.mmsi}`;
+            return `<div class="popup-radar">
+                <strong>${escHtml(nombre)}</strong><br>
+                <span>MMSI: ${escHtml(barco.mmsi || '—')}</span><br>
+                <span>Velocidad (SOG): ${escHtml(formatSog(barco.sog))}</span><br>
+                <span>Último reporte: ${escHtml(formatHoraReporte(barco.actualizadoEn))}</span>
+            </div>`;
+        }
+
+        function asegurarMapaRadarVisible() {
+            const panel = document.getElementById('mapa-barco-preview');
+            if (panel) panel.classList.remove('hidden');
+            inicializarMapaRadarAdmin();
+        }
+
+        function inicializarMapaRadarAdmin() {
+            const cont = document.getElementById('mapa-barco-seleccion');
+            if (!cont || typeof L === 'undefined') return false;
+            if (mapaBarcoAdmin?.map) return true;
+
+            const map = L.map(cont, {
+                center: RADAR_MAP_CENTER,
+                zoom: RADAR_MAP_ZOOM,
+                zoomControl: true,
+                attributionControl: true
+            });
+            L.tileLayer(MAPA_TILE_URL, { attribution: MAPA_TILE_ATTRIB, maxZoom: 19 }).addTo(map);
+            mapaBarcoAdmin = { map };
+            setTimeout(() => map.invalidateSize(), 120);
+            buquesEnRadar.forEach(b => actualizarMarcadorRadar(b));
+            resaltarMarcadoresPorSeleccion();
+            return true;
+        }
+
+        function resaltarMarcadoresPorSeleccion() {
+            const selMmsi = barcoSeleccionado?.mmsi ? String(barcoSeleccionado.mmsi) : null;
+            Object.keys(markersDict).forEach(mmsi => {
+                const entry = markersDict[mmsi];
+                const barco = entry.barco || barcosEnVivoPorMmsi.get(mmsi);
+                if (!barco || !entry.marker) return;
+                entry.marker.setIcon(crearIconoBarco(barco, mmsi === selMmsi));
+            });
+        }
+
+        function actualizarMarcadorRadar(barco) {
+            if (!barco?.mmsi || barco.Latitude == null || barco.Longitude == null) return;
+            if (!inicializarMapaRadarAdmin()) return;
+
+            const mmsi = String(barco.mmsi);
+            const lat = barco.Latitude;
+            const lon = barco.Longitude;
+            const seleccionado = barcoSeleccionado?.mmsi === mmsi;
+            const popup = contenidoPopupBarco(barco);
+
+            if (markersDict[mmsi]) {
+                markersDict[mmsi].marker.setLatLng([lat, lon]);
+                markersDict[mmsi].marker.setIcon(crearIconoBarco(barco, seleccionado));
+                markersDict[mmsi].marker.setPopupContent(popup);
+                markersDict[mmsi].barco = barco;
+            } else {
+                const marker = L.marker([lat, lon], { icon: crearIconoBarco(barco, seleccionado) })
+                    .addTo(mapaBarcoAdmin.map)
+                    .bindPopup(popup);
+                marker.on('click', () => {
+                    seleccionarBarcoAis(barco);
+                });
+                markersDict[mmsi] = { marker, barco };
+            }
+
+            if (seleccionado && mapaBarcoAdmin?.map) {
+                mapaBarcoAdmin.map.panTo([lat, lon], { animate: true });
+            }
+        }
+
+        function limpiarMarcadoresObsoletos() {
+            const ahora = Date.now();
+            let huboCambios = false;
+            Object.keys(markersDict).forEach(mmsi => {
+                const barco = barcosEnVivoPorMmsi.get(mmsi);
+                if (!barco || (ahora - barco.actualizadoEn) > AIS_STALE_MS) {
+                    markersDict[mmsi].marker.remove();
+                    delete markersDict[mmsi];
+                    barcosEnVivoPorMmsi.delete(mmsi);
+                    huboCambios = true;
+                }
+            });
+            if (huboCambios) {
+                buquesEnRadar = Array.from(barcosEnVivoPorMmsi.values());
+                actualizarContadorBarcosZona();
+                if (barcoSeleccionado && !barcosEnVivoPorMmsi.has(String(barcoSeleccionado.mmsi))) {
+                    limpiarSeleccionBarco();
+                }
+            }
+        }
+
+        function iniciarLimpiezaRadar() {
+            detenerLimpiezaRadar();
+            limpiarMarcadoresObsoletos();
+            limpiezaRadarInterval = setInterval(limpiarMarcadoresObsoletos, 60000);
+        }
+
+        function detenerLimpiezaRadar() {
+            if (limpiezaRadarInterval) {
+                clearInterval(limpiezaRadarInterval);
+                limpiezaRadarInterval = null;
+            }
+        }
+
+        function sincronizarCoordenadasFormulario(barco) {
+            const latInput = document.getElementById('input-latitud');
+            const lonInput = document.getElementById('input-longitud');
+            if (!latInput || !lonInput) return;
+            if (!barco) {
+                latInput.value = '';
+                lonInput.value = '';
+                return;
+            }
+            const lat = barco.latitud ?? barco.Latitude;
+            const lon = barco.longitud ?? barco.Longitude;
+            latInput.value = lat != null ? Number(lat).toFixed(6) : '';
+            lonInput.value = lon != null ? Number(lon).toFixed(6) : '';
+        }
+
+        function limpiarCoordenadasFormulario() {
+            sincronizarCoordenadasFormulario(null);
+        }
+
+        function inicializarMapaOperativo(servicioId) {
+            const s = servicios.find(x => x.id === servicioId);
+            const coords = coordenadasBuque(s?.buque);
+            if (!coords) return false;
+            const cont = document.getElementById(`mapa-${servicioId}`);
+            if (!cont || typeof L === 'undefined') return false;
+
+            if (mapasOperativo[servicioId]?.map) {
+                mapasOperativo[servicioId].map.remove();
+            }
+
+            const map = L.map(cont, {
+                center: [coords.lat, coords.lon],
+                zoom: 11,
+                zoomControl: true,
+                attributionControl: true
+            });
+            L.tileLayer(MAPA_TILE_URL, {
+                attribution: MAPA_TILE_ATTRIB,
+                maxZoom: 19
+            }).addTo(map);
+
+            const marker = L.marker([coords.lat, coords.lon], { icon: crearIconoBarco(s.buque, false) }).addTo(map);
+            marker.bindPopup(contenidoPopupBarco(s.buque || { mmsi: s.buque?.mmsi, VesselName: s.referencia }));
+            mapasOperativo[servicioId] = { map, marker };
+            setTimeout(() => map.invalidateSize(), 120);
+            return true;
+        }
+
+        function actualizarMapaOperativo(servicioId) {
+            const entry = mapasOperativo[servicioId];
+            const s = servicios.find(x => x.id === servicioId);
+            const coords = coordenadasBuque(s?.buque);
+            if (!entry?.map || !coords) return;
+            const { lat, lon } = coords;
+            entry.marker.setLatLng([lat, lon]);
+            entry.marker.setIcon(crearIconoBarco(s.buque, false));
+            entry.map.panTo([lat, lon], { animate: true });
+            entry.marker.setPopupContent(contenidoPopupBarco(s.buque || { VesselName: s.referencia }));
+            const leyenda = document.getElementById(`mapa-leyenda-${servicioId}`);
+            if (leyenda && s.buque?.posicionActualizadaEn) {
+                leyenda.textContent = `Última actualización AIS: ${new Date(s.buque.posicionActualizadaEn).toLocaleTimeString('es-AR')}`;
+            }
+        }
+
+        async function operativoToggleMapa(servicioId) {
+            const panel = document.getElementById(`panel-mapa-${servicioId}`);
+            if (!panel) return;
+            const abierto = !panel.classList.contains('hidden');
+            if (abierto) {
+                panel.classList.add('hidden');
+                mapaAbiertoServicioId = null;
+                return;
+            }
+            mapaAbiertoServicioId = servicioId;
+            panel.classList.remove('hidden');
+            const s = servicios.find(x => x.id === servicioId);
+            if (!coordenadasBuque(s?.buque)) {
+                mostrarToast('Obteniendo posición del buque…');
+                await actualizarPosicionBuqueServicio(servicioId, { silencioso: true });
+            }
+            if (!inicializarMapaOperativo(servicioId)) {
+                mostrarToast('Sin coordenadas AIS para este buque');
+                panel.classList.add('hidden');
+                mapaAbiertoServicioId = null;
+                return;
+            }
+            actualizarMapaOperativo(servicioId);
+        }
+
+        function setAisAviso(msg) {
+            const el = document.getElementById('ais-aviso-manual');
+            if (!msg) {
+                el.classList.add('hidden');
+                el.textContent = '';
+                return;
+            }
+            el.textContent = msg;
+            el.classList.remove('hidden');
+        }
+
+        function cerrarDropdownAis() {
+            const dd = document.getElementById('ais-dropdown');
+            dd.classList.add('hidden');
+            dd.innerHTML = '';
+        }
+
+        function renderizarDropdownAis(barcos) {
+            const dd = document.getElementById('ais-dropdown');
+            if (!barcos.length) {
+                dd.innerHTML = '<p class="ais-empty">Sin coincidencias en radar en vivo. Podés escribir el nombre manualmente.</p>';
+                dd.classList.remove('hidden');
+                return;
+            }
+            dd.innerHTML = barcos.map((b, i) => `
+                <button type="button" class="ais-result" role="option" data-idx="${i}">
+                    <span class="ais-result-name">${escHtml(b.VesselName || b.vesselName || b.name || b.nombre)}</span>
+                    <span class="ais-result-meta">
+                        ${b.mmsi ? `MMSI ${escHtml(b.mmsi)}` : ''}
+                        ${b.Latitude != null ? ` · ${b.Latitude.toFixed(2)}°, ${b.Longitude.toFixed(2)}°` : ''}
+                        ${b.sog != null ? ` · ${formatSog(b.sog)}` : ''}
+                        ${b.Status && b.Status !== '—' ? ` · ${escHtml(b.Status)}` : ''}
+                    </span>
+                </button>`).join('');
+            dd._resultados = barcos;
+            dd.querySelectorAll('.ais-result').forEach(btn => {
+                btn.addEventListener('click', () => seleccionarBarcoAis(barcos[Number(btn.dataset.idx)]));
+            });
+            dd.classList.remove('hidden');
+        }
+
+        function destruirMapaBarcoAdmin() {
+            detenerLimpiezaRadar();
+            Object.keys(markersDict).forEach(mmsi => {
+                markersDict[mmsi].marker?.remove();
+                delete markersDict[mmsi];
+            });
+            if (mapaBarcoAdmin?.map) {
+                mapaBarcoAdmin.map.remove();
+                mapaBarcoAdmin = null;
+            }
+            document.getElementById('mapa-barco-preview')?.classList.add('hidden');
+        }
+
+        function centrarMapaBarcoAdmin(barco) {
+            asegurarMapaRadarVisible();
+            if (barco) {
+                actualizarMarcadorRadar(barco);
+                resaltarMarcadoresPorSeleccion();
+                const coords = coordenadasBuque(barco);
+                if (coords && mapaBarcoAdmin?.map) {
+                    mapaBarcoAdmin.map.panTo([coords.lat, coords.lon], { animate: true });
+                }
+            }
+        }
+
+        function mostrarResumenBarco(barco) {
+            const dl = document.getElementById('barco-seleccionado-resumen');
+            if (!barco) {
+                dl.classList.add('hidden');
+                dl.innerHTML = '';
+                return;
+            }
+            const coords = barco.latitud != null && barco.longitud != null
+                ? `${barco.latitud.toFixed(5)}°, ${barco.longitud.toFixed(5)}°`
+                : '—';
+            dl.innerHTML = `
+                <div class="text-xs font-semibold text-accent-teal mb-1">Buque vinculado (AIS)</div>
+                <div><dt>MMSI: </dt><dd>${escHtml(barco.mmsi || '—')}</dd>
+                <dt>Posición: </dt><dd>${escHtml(coords)}</dd></div>
+                <div><dt>Navegación: </dt><dd>${escHtml(barco.estadoNavegacion)}</dd>
+                <dt>SOG: </dt><dd>${escHtml(formatSog(barco.sog))}</dd>
+                ${barco.imo ? `<dt>IMO: </dt><dd>${escHtml(barco.imo)}</dd>` : ''}</div>`;
+            dl.classList.remove('hidden');
+        }
+
+        function seleccionarBarcoAis(barco) {
+            barcoSeleccionado = {
+                nombre: barco.VesselName || barco.vesselName || barco.name || barco.nombre,
+                mmsi: barco.mmsi,
+                latitud: barco.Latitude ?? barco.latitud,
+                longitud: barco.Longitude ?? barco.longitud,
+                estadoNavegacion: barco.Status ?? barco.estadoNavegacion,
+                sog: barco.sog,
+                heading: barco.heading ?? barco.course,
+                manual: false
+            };
+            aisModoManual = false;
+            document.getElementById('input-barco').value = barcoSeleccionado.nombre;
+            cerrarDropdownAis();
+            setAisAviso('');
+            mostrarResumenBarco(barcoSeleccionado);
+            sincronizarCoordenadasFormulario(barcoSeleccionado);
+            asegurarMapaRadarVisible();
+            resaltarMarcadoresPorSeleccion();
+            centrarMapaBarcoAdmin(barco);
+            const leyenda = document.getElementById('mapa-radar-leyenda');
+            if (leyenda) {
+                leyenda.textContent = `Siguiendo: ${barcoSeleccionado.nombre} (MMSI ${barcoSeleccionado.mmsi})`;
+            }
+        }
+
+        function limpiarSeleccionBarco() {
+            barcoSeleccionado = null;
+            mostrarResumenBarco(null);
+            limpiarCoordenadasFormulario();
+            resaltarMarcadoresPorSeleccion();
+            const leyenda = document.getElementById('mapa-radar-leyenda');
+            if (leyenda) {
+                leyenda.textContent = 'Radar AIS — seleccioná un buque para seguimiento automático';
+            }
+        }
+
+        function programarBusquedaBarco(query) {
+            clearTimeout(busquedaDebounceTimer);
+            const q = (query || '').trim();
+            if (q.length < BUSQUEDA_MIN_CHARS) {
+                cerrarDropdownAis();
+                setAisAviso('');
+                return;
+            }
+            if (barcoSeleccionado && barcoSeleccionado.nombre === q) return;
+
+            busquedaDebounceTimer = setTimeout(() => {
+                const barcos = buscarBarcoEnVivo(q);
+                aisModoManual = false;
+                renderizarDropdownAis(barcos);
+                if (!barcos.length) {
+                    aisModoManual = true;
+                    setAisAviso(buquesEnRadar.length
+                        ? 'Sin coincidencias en el radar en vivo. Continuá con el nombre manual.'
+                        : 'Esperando datos del radar… Escribí el nombre manualmente si hace falta.');
+                } else {
+                    setAisAviso('');
+                }
+            }, BUSQUEDA_DEBOUNCE_MS);
+        }
+
+        function initBuscadorBarco() {
+            const input = document.getElementById('input-barco');
+            const wrap = document.getElementById('wrap-busqueda-barco');
+
+            input.addEventListener('input', () => {
+                if (barcoSeleccionado && input.value.trim() !== barcoSeleccionado.nombre) {
+                    limpiarSeleccionBarco();
+                }
+                programarBusquedaBarco(input.value);
+            });
+
+            input.addEventListener('focus', () => {
+                const q = input.value.trim();
+                if (q.length >= BUSQUEDA_MIN_CHARS && !barcoSeleccionado) {
+                    programarBusquedaBarco(q);
+                }
+            });
+
+            document.addEventListener('click', e => {
+                if (!wrap.contains(e.target)) cerrarDropdownAis();
+            });
+        }
+
+        function resetBuscadorBarco() {
+            clearTimeout(busquedaDebounceTimer);
+            barcoSeleccionado = null;
+            aisModoManual = false;
+            cerrarDropdownAis();
+            setAisAviso('');
+            mostrarResumenBarco(null);
+            limpiarCoordenadasFormulario();
+            resaltarMarcadoresPorSeleccion();
+            actualizarContadorBarcosZona();
+            const leyenda = document.getElementById('mapa-radar-leyenda');
+            if (leyenda) {
+                leyenda.textContent = 'Radar AIS — seleccioná un buque para seguimiento automático';
+            }
+        }
+
+        function datosBuqueParaServicio(referenciaTexto) {
+            const nombre = (referenciaTexto || '').trim();
+            if (barcoSeleccionado && barcoSeleccionado.nombre === nombre && !barcoSeleccionado.manual) {
+                const latForm = parseFloat(document.getElementById('input-latitud')?.value);
+                const lonForm = parseFloat(document.getElementById('input-longitud')?.value);
+                return {
+                    nombre: barcoSeleccionado.nombre,
+                    mmsi: barcoSeleccionado.mmsi,
+                    imo: barcoSeleccionado.imo ?? null,
+                    latitud: barcoSeleccionado.latitud ?? (Number.isFinite(latForm) ? latForm : null),
+                    longitud: barcoSeleccionado.longitud ?? (Number.isFinite(lonForm) ? lonForm : null),
+                    estadoNavegacion: barcoSeleccionado.estadoNavegacion,
+                    sog: barcoSeleccionado.sog ?? null,
+                    bandera: barcoSeleccionado.bandera ?? null,
+                    tipo: barcoSeleccionado.tipo ?? null,
+                    manual: false
+                };
+            }
+            return {
+                nombre,
+                mmsi: null,
+                imo: null,
+                latitud: null,
+                longitud: null,
+                estadoNavegacion: null,
+                bandera: null,
+                tipo: null,
+                manual: true
+            };
+        }
+
+        /* ——— Sesión ——— */
+        function iniciarSesion(email) {
+            const result = identificarUsuario(email);
+            if (!result.ok) {
+                const err = document.getElementById('login-error');
+                err.textContent = result.error;
+                err.classList.remove('hidden');
+                return;
+            }
+            document.getElementById('login-error').classList.add('hidden');
+            usuarioActual = result.usuario;
+            localStorage.setItem(STORAGE_SESION, normalizarEmail(usuarioActual.email));
+            mostrarApp();
+        }
+
+        function cerrarSesion() {
+            detenerRefreshPosicionesActivas();
+            desconectarAisstream();
+            destruirMapaBarcoAdmin();
+            destruirMapasOperativo();
+            destruirMapaBarcoAdmin();
+            localStorage.removeItem(STORAGE_SESION);
+            usuarioActual = null;
+            document.body.classList.remove('vista-operativo-activa');
+            document.getElementById('pantalla-login').classList.remove('hidden');
+            document.getElementById('app-principal').classList.add('hidden');
+            document.getElementById('modal-config').classList.add('hidden');
+        }
+
+        function mostrarApp() {
+            document.getElementById('pantalla-login').classList.add('hidden');
+            document.getElementById('app-principal').classList.remove('hidden');
+
+            document.getElementById('header-usuario').textContent =
+                `${usuarioActual.nombre} · ${usuarioActual.rol}`;
+
+            const esAdmin = esAdministrador(usuarioActual);
+            document.getElementById('btn-configuracion').classList.toggle('hidden', !esAdmin);
+            document.getElementById('vista-admin').classList.toggle('hidden', !esAdmin);
+            document.getElementById('vista-operativo').classList.toggle('hidden', esAdmin);
+            document.getElementById('footer-principal').classList.toggle('hidden', !esAdmin);
+            document.body.classList.toggle('vista-operativo-activa', !esAdmin);
+            document.getElementById('header-principal').classList.toggle('hidden', !esAdmin);
+
+            if (esAdmin) {
+                detenerRefreshPosicionesActivas();
+                destruirMapasOperativo();
+                conectarAisstream();
+                asegurarMapaRadarVisible();
+                poblarFormularioServicio();
+                renderizarTablero();
+                actualizarMetricasAdmin();
+            } else {
+                desconectarAisstream();
+                destruirMapaBarcoAdmin();
+                document.getElementById('operativo-subtitulo').textContent =
+                    `${usuarioActual.rol} — ${usuarioActual.lanchaPreferida || 'Sin lancha fija'}`;
+                conectarAisstream();
+                renderizarTareasOperativo();
+                iniciarRefreshPosicionesActivas();
+            }
+        }
+
+        /* ——— Admin: formulario y tablero ——— */
+        function staffOperativo() {
+            return empresaData.staff.filter(s => ROLES_OPERATIVO.includes(s.rol));
+        }
+
+        function poblarFormularioServicio() {
+            const selLancha = document.getElementById('select-lancha');
+            const selTipo = document.getElementById('select-tipo-servicio');
+            const chkPersonal = document.getElementById('checkbox-personal');
+
+            selLancha.innerHTML = empresaData.flota.length
+                ? empresaData.flota.map(l => `<option value="${escHtml(l)}">${escHtml(l)}</option>`).join('')
+                : '<option value="" disabled>Sin lanchas — configurá la flota</option>';
+
+            selTipo.innerHTML = empresaData.catalogoServicios.length
+                ? empresaData.catalogoServicios.map(s => `<option value="${escHtml(s)}">${escHtml(s)}</option>`).join('')
+                : '<option value="" disabled>Sin servicios en catálogo</option>';
+
+            const operativos = staffOperativo();
+            chkPersonal.innerHTML = operativos.length
+                ? operativos.map(p => `
+                    <label class="chip cursor-pointer">
+                        <input type="checkbox" name="personal" value="${escHtml(p.email)}" class="sr-only peer">
+                        <span>${escHtml(p.nombre)}</span>
+                        <span class="text-brand-muted">(${escHtml(p.rol)})</span>
+                    </label>`).join('')
+                : '<p class="text-sm text-brand-muted">Agregá personal operativo en Configuración.</p>';
+        }
+
+        function crearServicio(datos) {
+            const personal = datos.personal.length ? datos.personal : [];
+            const buque = datos.buque || datosBuqueParaServicio(datos.referencia);
+            const servicio = {
+                id: uid(),
+                referencia: buque.nombre || datos.referencia.trim(),
+                buque,
+                lancha: datos.lancha,
+                tipoServicio: datos.tipoServicio,
+                personalAsignado: personal,
+                notas: (datos.notas || '').trim(),
+                estado: ESTADOS.PENDIENTE,
+                creadoEn: Date.now(),
+                actualizadoEn: Date.now()
+            };
+            servicios.unshift(servicio);
+            guardarServicios();
+            notificarPersonalAsignado(servicio);
+            return servicio;
+        }
+
+        function cambiarEstadoServicio(id, nuevoEstado) {
+            const s = servicios.find(x => x.id === id);
+            if (!s) return;
+            const orden = [ESTADOS.PENDIENTE, ESTADOS.EN_CURSO, ESTADOS.FINALIZADO];
+            const idxActual = orden.indexOf(s.estado);
+            const idxNuevo = orden.indexOf(nuevoEstado);
+            if (idxNuevo !== idxActual + 1 && idxNuevo !== idxActual) return;
+            s.estado = nuevoEstado;
+            s.actualizadoEn = Date.now();
+            guardarServicios();
+
+            if (nuevoEstado === ESTADOS.EN_CURSO) {
+                s.personalAsignado.forEach(email => {
+                    const p = buscarStaffPorEmail(email);
+                    if (p?.telefono) {
+                        enviarNotificacionWhatsapp(p.telefono,
+                            `RadaDigital: El servicio "${s.tipoServicio}" (${s.referencia}) está EN CURSO.`);
+                    }
+                });
+            }
+        }
+
+        function eliminarServicio(id) {
+            servicios = servicios.filter(s => s.id !== id);
+            guardarServicios();
+        }
+
+        function actualizarMetricasAdmin() {
+            const p = servicios.filter(s => s.estado === ESTADOS.PENDIENTE).length;
+            const c = servicios.filter(s => s.estado === ESTADOS.EN_CURSO).length;
+            const f = servicios.filter(s => s.estado === ESTADOS.FINALIZADO).length;
+            document.getElementById('metric-pendientes').textContent = p;
+            document.getElementById('metric-en-curso').textContent = c;
+            document.getElementById('metric-finalizados').textContent = f;
+            document.getElementById('metric-flota').textContent = empresaData.flota.length;
+            document.getElementById('contador-tablero').textContent =
+                `${servicios.length} servicio${servicios.length !== 1 ? 's' : ''}`;
+        }
+
+        function renderizarTablero() {
+            const lista = document.getElementById('lista-tablero');
+            if (!servicios.length) {
+                lista.innerHTML = '<p class="p-8 text-sm text-brand-muted text-center">No hay servicios cargados. Usá el formulario de arriba.</p>';
+                actualizarMetricasAdmin();
+                return;
+            }
+            lista.innerHTML = servicios.map(s => {
+                const nombresPersonal = (s.personalAsignado || [])
+                    .map(e => buscarStaffPorEmail(e)?.nombre || e)
+                    .join(', ') || '—';
+                const atenuado = s.estado === ESTADOS.FINALIZADO;
+                return `
+                <div class="p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4 ${atenuado ? 'opacity-75' : ''}">
+                    <div class="space-y-1 min-w-0">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <span class="font-bold text-lg ${atenuado ? 'text-brand-muted' : 'text-[#E2E6EA]'}">${escHtml(s.referencia)}</span>
+                            <span class="text-xs px-2 py-0.5 rounded border tag-tipo">${escHtml(s.tipoServicio)}</span>
+                            ${badgeEstado(s.estado)}
+                        </div>
+                        <p class="text-sm text-brand-muted">Lancha: <span class="text-[#E2E6EA]">${escHtml(s.lancha)}</span></p>
+                        ${s.buque?.mmsi ? `<p class="text-xs text-brand-muted">MMSI: <span class="text-accent-sky">${escHtml(s.buque.mmsi)}</span>${s.buque.imo ? ` · IMO ${escHtml(s.buque.imo)}` : ''}</p>` : ''}
+                        ${s.buque?.latitud != null ? `<p class="text-xs text-brand-muted">Posición AIS: <span class="text-[#E2E6EA]">${s.buque.latitud.toFixed(4)}°, ${s.buque.longitud.toFixed(4)}°</span> · ${escHtml(s.buque.estadoNavegacion || '—')}</p>` : ''}
+                        <p class="text-xs text-brand-muted">Personal: ${escHtml(nombresPersonal)}</p>
+                        ${s.notas ? `<p class="text-xs text-brand-muted italic">${escHtml(s.notas)}</p>` : ''}
+                        ${botonVerEnMapa(s.buque)}
+                    </div>
+                    <div class="flex flex-wrap gap-2 shrink-0 items-start">
+                        ${s.estado === ESTADOS.PENDIENTE ? `<button type="button" onclick="adminAvanzarEstado('${s.id}')" class="btn-ghost text-xs px-3 py-1.5 rounded-lg">Marcar En Curso</button>` : ''}
+                        ${s.estado === ESTADOS.EN_CURSO ? `<button type="button" onclick="adminAvanzarEstado('${s.id}')" class="btn-ghost text-xs px-3 py-1.5 rounded-lg" style="border-color:var(--accent-violet);color:var(--accent-violet)">Marcar Finalizado</button>` : ''}
+                        <button type="button" onclick="adminEliminar('${s.id}')" class="text-xs text-accent-coral hover:opacity-90 px-2 py-1.5">Eliminar</button>
+                    </div>
+                </div>`;
+            }).join('');
+            actualizarMetricasAdmin();
+        }
+
+        function adminAvanzarEstado(id) {
+            const s = servicios.find(x => x.id === id);
+            if (!s) return;
+            if (s.estado === ESTADOS.PENDIENTE) cambiarEstadoServicio(id, ESTADOS.EN_CURSO);
+            else if (s.estado === ESTADOS.EN_CURSO) cambiarEstadoServicio(id, ESTADOS.FINALIZADO);
+            renderizarTablero();
+            mostrarToast('Estado actualizado');
+        }
+
+        function adminEliminar(id) {
+            if (!confirm('¿Eliminar este servicio del tablero?')) return;
+            eliminarServicio(id);
+            renderizarTablero();
+            mostrarToast('Servicio eliminado');
+        }
+
+        /* ——— Operativo: tareas asignadas ——— */
+        function serviciosAsignadosA(usuario) {
+            const email = normalizarEmail(usuario.email);
+            return servicios.filter(s =>
+                s.estado !== ESTADOS.FINALIZADO &&
+                (s.personalAsignado || []).some(e => normalizarEmail(e) === email)
+            );
+        }
+
+        function renderizarTareasOperativo() {
+            const cont = document.getElementById('lista-tareas-operativo');
+            const tareas = serviciosAsignadosA(usuarioActual);
+            const mapaReabrir = mapaAbiertoServicioId;
+            destruirMapasOperativo();
+            mapaAbiertoServicioId = mapaReabrir;
+
+            if (!tareas.length) {
+                cont.innerHTML = `
+                    <div class="flex flex-col items-center justify-center text-center py-16 px-4">
+                        <p class="text-xl font-bold text-[#E2E6EA]">Sin tareas asignadas</p>
+                        <p class="text-brand-muted mt-2 text-sm">Cuando la oficina te asigne un servicio, aparecerá acá.</p>
+                    </div>`;
+                return;
+            }
+
+            cont.innerHTML = tareas.map(s => {
+                const btnIniciar = s.estado === ESTADOS.PENDIENTE;
+                const btnFinalizar = s.estado === ESTADOS.EN_CURSO;
+                const enCurso = s.estado === ESTADOS.EN_CURSO;
+                const coords = coordenadasBuque(s.buque);
+                const gmapsHref = coords ? urlGoogleMaps(coords.lat, coords.lon) : '#';
+                const mapaVisible = mapaReabrir === s.id;
+                const leyendaPos = s.buque?.posicionActualizadaEn
+                    ? `Última actualización AIS: ${new Date(s.buque.posicionActualizadaEn).toLocaleTimeString('es-AR')}`
+                    : coords ? 'Posición registrada al cargar el servicio' : '';
+                return `
+                <article class="card-panel border-2 border-[var(--accent-teal)] rounded-2xl p-5 space-y-4">
+                    <div class="flex justify-between items-start gap-2">
+                        <div>
+                            <p class="text-[10px] uppercase tracking-widest text-accent-coral font-semibold">${escHtml(s.tipoServicio)}</p>
+                            <h3 class="text-xl font-black text-accent-teal leading-tight mt-0.5">${escHtml(s.referencia)}</h3>
+                        </div>
+                        ${badgeEstado(s.estado)}
+                    </div>
+                    <p class="text-sm text-brand-muted">Lancha: <strong class="text-[#E2E6EA] font-medium">${escHtml(s.lancha)}</strong></p>
+                    ${enCurso && s.buque?.estadoNavegacion ? `<p class="text-xs text-brand-muted">Estado AIS: <span class="text-accent-teal">${escHtml(s.buque.estadoNavegacion)}</span></p>` : ''}
+                    ${s.notas ? `<p class="text-xs text-brand-muted border-l-2 border-brand pl-3">${escHtml(s.notas)}</p>` : ''}
+                    ${botonVerEnMapa(s.buque)}
+                    ${enCurso ? `
+                    <button type="button" onclick="operativoToggleMapa('${s.id}')"
+                        class="btn-mapa-ubicacion">
+                        ${mapaVisible ? 'Ocultar mapa del buque' : 'Ver Ubicación del Buque'}
+                    </button>
+                    <div id="panel-mapa-${s.id}" class="mapa-operativo-panel ${mapaVisible ? '' : 'hidden'}">
+                        <div id="mapa-${s.id}" class="mapa-operativo" role="img" aria-label="Mapa de posición del buque"></div>
+                        <a class="link-google-maps" href="${gmapsHref}" target="_blank" rel="noopener noreferrer"
+                            ${coords ? '' : 'aria-disabled="true" tabindex="-1" style="pointer-events:none;opacity:0.5"'}>
+                            Abrir en Google Maps
+                        </a>
+                        <p id="mapa-leyenda-${s.id}" class="mapa-operativo-leyenda">${escHtml(leyendaPos)}</p>
+                    </div>` : ''}
+                    <div class="space-y-3 pt-1">
+                        ${btnIniciar ? `
+                            <button type="button" onclick="operativoAvanzar('${s.id}')"
+                                class="btn-campo btn-campo-activo block w-full">
+                                Iniciar servicio
+                            </button>` : ''}
+                        ${btnFinalizar ? `
+                            <button type="button" onclick="operativoAvanzar('${s.id}')"
+                                class="btn-campo btn-campo-activo block w-full">
+                                Finalizar servicio
+                            </button>` : ''}
+                    </div>
+                </article>`;
+            }).join('');
+
+            if (mapaReabrir && tareas.some(s => s.id === mapaReabrir && s.estado === ESTADOS.EN_CURSO)) {
+                requestAnimationFrame(() => {
+                    inicializarMapaOperativo(mapaReabrir);
+                    actualizarMapaOperativo(mapaReabrir);
+                });
+            } else {
+                mapaAbiertoServicioId = null;
+            }
+        }
+
+        function operativoAvanzar(id) {
+            const s = servicios.find(x => x.id === id);
+            if (!s) return;
+            const email = normalizarEmail(usuarioActual.email);
+            if (!(s.personalAsignado || []).some(e => normalizarEmail(e) === email)) return;
+
+            if (s.estado === ESTADOS.PENDIENTE) {
+                cambiarEstadoServicio(id, ESTADOS.EN_CURSO);
+                mostrarToast('Servicio en curso');
+                actualizarPosicionBuqueServicio(id, { silencioso: true });
+                iniciarRefreshPosicionesActivas();
+            } else if (s.estado === ESTADOS.EN_CURSO) {
+                cambiarEstadoServicio(id, ESTADOS.FINALIZADO);
+                enviarNotificacionWhatsapp(
+                    buscarStaffPorEmail('admin@radadigital.com')?.telefono || '',
+                    `RadaDigital: ${usuarioActual.nombre} finalizó "${s.tipoServicio}" — ${s.referencia}.`
+                );
+                mostrarToast('Servicio finalizado');
+            }
+            renderizarTareasOperativo();
+        }
+
+        /* ——— Configuración ——— */
+        function abrirConfig() {
+            document.getElementById('config-nombre-empresa').value = empresaData.nombreEmpresa || '';
+            renderizarListasConfig();
+            document.getElementById('modal-config').classList.remove('hidden');
+        }
+
+        function cerrarConfig() {
+            document.getElementById('modal-config').classList.add('hidden');
+        }
+
+        function renderizarListasConfig() {
+            document.getElementById('lista-flota').innerHTML = empresaData.flota.map((l, i) => `
+                <li>
+                    <span class="text-[#E2E6EA]">${escHtml(l)}</span>
+                    <button type="button" onclick="quitarFlota(${i})" class="text-xs text-rose-400/80 hover:text-rose-400">Quitar</button>
+                </li>`).join('') || '<li class="text-brand-muted text-sm">Sin lanchas</li>';
+
+            document.getElementById('lista-staff').innerHTML = empresaData.staff.map((s, i) => `
+                <li>
+                    <span>
+                        <span class="text-[#E2E6EA]">${escHtml(s.nombre)}</span>
+                        <span class="text-brand-muted text-xs block">${escHtml(s.email)} · ${escHtml(s.rol)}</span>
+                    </span>
+                    ${s.email === usuarioActual?.email ? '' : `<button type="button" onclick="quitarStaff(${i})" class="text-xs text-rose-400/80">Quitar</button>`}
+                </li>`).join('');
+
+            document.getElementById('lista-catalogo').innerHTML = empresaData.catalogoServicios.map((c, i) => `
+                <li>
+                    <span class="text-[#E2E6EA]">${escHtml(c)}</span>
+                    <button type="button" onclick="quitarCatalogo(${i})" class="text-xs text-rose-400/80 hover:text-rose-400">Quitar</button>
+                </li>`).join('') || '<li class="text-brand-muted text-sm">Vacío</li>';
+        }
+
+        function quitarFlota(i) {
+            empresaData.flota.splice(i, 1);
+            guardarEmpresaData();
+            renderizarListasConfig();
+        }
+
+        function quitarStaff(i) {
+            const s = empresaData.staff[i];
+            if (s && normalizarEmail(s.email) === normalizarEmail(usuarioActual?.email)) return;
+            empresaData.staff.splice(i, 1);
+            guardarEmpresaData();
+            renderizarListasConfig();
+        }
+
+        function quitarCatalogo(i) {
+            empresaData.catalogoServicios.splice(i, 1);
+            guardarEmpresaData();
+            renderizarListasConfig();
+        }
+
+        function guardarConfigDesdeModal() {
+            empresaData.nombreEmpresa = document.getElementById('config-nombre-empresa').value.trim()
+                || 'RadaDigital';
+            guardarEmpresaData();
+            poblarFormularioServicio();
+            cerrarConfig();
+            mostrarToast('Configuración guardada');
+        }
+
+        /* ——— Eventos ——— */
+        document.getElementById('form-login').addEventListener('submit', e => {
+            e.preventDefault();
+            iniciarSesion(document.getElementById('input-email').value);
+        });
+
+        document.getElementById('form-nuevo-servicio').addEventListener('submit', e => {
+            e.preventDefault();
+            if (!esAdministrador(usuarioActual)) return;
+            const fd = new FormData(e.target);
+            const personal = [...e.target.querySelectorAll('input[name="personal"]:checked')].map(c => c.value);
+            if (!empresaData.flota.length) {
+                mostrarToast('Configurá al menos una lancha');
+                return;
+            }
+            if (!personal.length) {
+                mostrarToast('Seleccioná al menos un integrante del personal');
+                return;
+            }
+            const referencia = (fd.get('referencia') || '').trim();
+            if (!referencia) {
+                mostrarToast('Indicá el buque o referencia');
+                return;
+            }
+            crearServicio({
+                referencia,
+                buque: datosBuqueParaServicio(referencia),
+                lancha: fd.get('lancha'),
+                tipoServicio: fd.get('tipoServicio'),
+                notas: fd.get('notas'),
+                personal
+            });
+            e.target.reset();
+            resetBuscadorBarco();
+            poblarFormularioServicio();
+            renderizarTablero();
+            mostrarToast('Servicio cargado · notificaciones en consola');
+        });
+
+        document.getElementById('form-agregar-lancha').addEventListener('submit', e => {
+            e.preventDefault();
+            const nombre = new FormData(e.target).get('nombre').trim();
+            if (nombre && !empresaData.flota.includes(nombre)) empresaData.flota.push(nombre);
+            guardarEmpresaData();
+            e.target.reset();
+            renderizarListasConfig();
+        });
+
+        document.getElementById('form-agregar-staff').addEventListener('submit', e => {
+            e.preventDefault();
+            const fd = new FormData(e.target);
+            const email = normalizarEmail(fd.get('email'));
+            if (buscarStaffPorEmail(email)) {
+                mostrarToast('Ese correo ya existe');
+                return;
+            }
+            empresaData.staff.push({
+                id: uid(),
+                nombre: fd.get('nombre').trim(),
+                email,
+                telefono: (fd.get('telefono') || '').trim(),
+                rol: fd.get('rol'),
+                lanchaPreferida: fd.get('rol') === 'Patrón' ? empresaData.flota[0] || '' : undefined
+            });
+            guardarEmpresaData();
+            e.target.reset();
+            renderizarListasConfig();
+        });
+
+        document.getElementById('form-agregar-servicio-catalogo').addEventListener('submit', e => {
+            e.preventDefault();
+            const nombre = new FormData(e.target).get('nombre').trim();
+            if (nombre && !empresaData.catalogoServicios.includes(nombre)) {
+                empresaData.catalogoServicios.push(nombre);
+            }
+            guardarEmpresaData();
+            e.target.reset();
+            renderizarListasConfig();
+        });
+
+        document.getElementById('btn-configuracion').addEventListener('click', abrirConfig);
+        document.getElementById('btn-cerrar-config').addEventListener('click', cerrarConfig);
+        document.getElementById('btn-guardar-config').addEventListener('click', guardarConfigDesdeModal);
+        document.getElementById('btn-cerrar-sesion').addEventListener('click', cerrarSesion);
+        document.getElementById('btn-cerrar-sesion-operativo').addEventListener('click', cerrarSesion);
+        document.getElementById('modal-config').addEventListener('click', e => {
+            if (e.target.id === 'modal-config') cerrarConfig();
+        });
+
+        /* ——— Init ——— */
+        initBuscadorBarco();
+        actualizarContadorBarcosZona();
+        cargarEmpresaData();
+        cargarServicios();
+
+        const sesionGuardada = localStorage.getItem(STORAGE_SESION);
+        if (sesionGuardada) {
+            const result = identificarUsuario(sesionGuardada);
+            if (result.ok) {
+                usuarioActual = result.usuario;
+                mostrarApp();
+            } else {
+                localStorage.removeItem(STORAGE_SESION);
+            }
+        }
+    </script>
+    <script>
+        if (location.protocol === 'https:' && 'serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js');
+        }
+    </script>
+</body>
+</html>
