@@ -62,4 +62,4 @@ jobs:
           app-name: 'radadigital-mvp'
           slot-name: 'Production'
           package: .
-          
+          startup-command: 'pm2 start pm2.json --no-daemon'
