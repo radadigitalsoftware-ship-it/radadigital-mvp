@@ -6,12 +6,13 @@ on:
       - main
   workflow_dispatch:
 
-env:
-  ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
-
 jobs:
   build:
     runs-on: ubuntu-latest
+    # ESTA ES LA CLAVE: Forzamos la variable aquí para que todo el job la reconozca
+    env:
+      ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     permissions:
       contents: read
 
