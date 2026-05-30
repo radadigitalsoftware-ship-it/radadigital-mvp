@@ -1,62 +1,15 @@
-name: Build and deploy Node.js app to Azure Web App - radadigital-mvp
-
-on:
-  push:
-    branches:
-      - main
-  workflow_dispatch:
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    # ESTA ES LA CLAVE: Forzamos la variable aquí para que todo el job la reconozca
-    env:
-      ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-    permissions:
-      contents: read
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22.x'
-
-      - name: npm install and build
-        run: |
-          npm install
-          npm run build --if-present
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: node-app
-          path: .
-
-  deploy:
+deploy:
     runs-on: ubuntu-latest
     needs: build
-    permissions:
-      id-token: write
-      contents: read
-
     steps:
       - name: Download artifact
         uses: actions/download-artifact@v4
         with:
           name: node-app
       
-      - name: Login to Azure
-        uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_94E7B55012F54D28ADF37704FBC3A25C }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_557BD2E1FAE04850A89AC433BC7F0A10 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_979E7CD6FFA44B1EBBCFF729DBE75C90 }}
-
       - name: 'Deploy to Azure Web App'
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'radadigital-mvp'
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_XXXX }}
           package: .
