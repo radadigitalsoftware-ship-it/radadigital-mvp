@@ -1,4 +1,4 @@
-name: Build and deploy Node.js app
+name: Deploy to Azure
 
 on:
   push:
@@ -18,5 +18,3 @@ jobs:
           app-name: 'radadigital-mvp'
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_XXXX }}
           package: .
-          # Esta línea le dice a Azure que no se complique y que él mismo compile el código
-          startup-command: 'npm install && npm run build'
