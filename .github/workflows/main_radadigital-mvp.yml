@@ -7,15 +7,10 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Install and Build
-        run: |
-          npm install
-          npm run build --if-present
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
@@ -23,3 +18,5 @@ jobs:
           app-name: 'radadigital-mvp'
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_XXXX }}
           package: .
+          # Esta línea le dice a Azure que no se complique y que él mismo compile el código
+          startup-command: 'npm install && npm run build'
