@@ -17,4 +17,7 @@ jobs:
         with:
           app-name: 'radadigital-mvp'
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_XXXX }}
-          package: .
+          # AQUÍ ESTÁ EL CAMBIO: le decimos que suba la carpeta server
+          package: './server'
+          # Configuramos la versión de Node directamente en el despliegue
+          app-settings-json: '[{"name": "WEBSITE_NODE_DEFAULT_VERSION", "value": "22.0.0"}]'
