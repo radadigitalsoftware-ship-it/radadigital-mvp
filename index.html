@@ -1031,6 +1031,10 @@
             } catch {
                 return;
             }
+            if (data.type === 'diagnostico') {
+                alert(data.msg);
+                return;
+            }
             if (data.type === 'proxy_status') {
                 setAisRadarEnVivo(!!data.connected);
                 if (data.connected) {
