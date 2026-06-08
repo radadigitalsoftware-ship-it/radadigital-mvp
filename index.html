@@ -603,11 +603,7 @@
         const STORAGE_SESION = 'radadigital-sesion';
 
         function urlWebSocketAis() {
-            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-            const host = window.location.hostname === 'localhost'
-                ? 'localhost:3000'
-                : window.location.hostname;
-            return `${protocol}//${host}/ws/ais`;
+            return (window.location.protocol === 'https:' ? 'wss://' : 'ws://') + window.location.host;
         }
         const AIS_STALE_MS = 10 * 60 * 1000;
         const RADAR_MAP_CENTER = [-34.5, -58.0];
@@ -1022,6 +1018,11 @@
             setAisRadarEnVivo(false);
         }
 
+        function procesarMensajeBarcos(lista) {
+            if (!Array.isArray(lista)) return;
+            lista.forEach(barco => ingestarMensajeAisstream(barco));
+        }
+
         function procesarMensaje(datos) {
             if (datos == null) return;
             const texto = typeof datos === 'string' ? datos : String(datos);
@@ -1033,6 +1034,10 @@
             }
             if (data.type === 'diagnostico') {
                 alert(data.msg);
+                return;
+            }
+            if (data.type === 'barcos') {
+                procesarMensajeBarcos(data.barcos);
                 return;
             }
             if (data.type === 'proxy_status') {
@@ -1063,10 +1068,27 @@
                 setAisAviso('');
             };
             aisSocket.onmessage = (event) => {
+                const manejar = (texto) => {
+                    let data;
+                    try {
+                        data = JSON.parse(texto);
+                    } catch {
+                        return;
+                    }
+                    if (data.type === 'diagnostico') {
+                        alert(data.msg);
+                        return;
+                    }
+                    if (data.type === 'barcos') {
+                        procesarMensajeBarcos(data.barcos);
+                        return;
+                    }
+                    procesarMensaje(texto);
+                };
                 if (event.data instanceof Blob) {
-                    event.data.text().then(text => procesarMensaje(text));
+                    event.data.text().then(manejar);
                 } else {
-                    procesarMensaje(event.data);
+                    manejar(event.data);
                 }
             };
             aisSocket.onerror = () => {
