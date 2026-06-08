@@ -2,10 +2,11 @@
   "name": "radadigital-ais-proxy",
   "version": "1.0.0",
   "private": true,
-  "description": "Proxy WebSocket AISstream + servidor estático RadaDigital",
+  "description": "Proxy WebSocket MarineTraffic + servidor estático RadaDigital",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "postinstall": "npx playwright install chromium --with-deps"
   },
   "engines": {
     "node": ">=18"
@@ -13,6 +14,8 @@
   "dependencies": {
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
+    "node-fetch": "^3.3.2",
+    "playwright-chromium": "^1.44.0",
     "ws": "^8.18.0"
   }
 }

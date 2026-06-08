@@ -12,12 +12,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies + Playwright
+        run: |
+          cd server
+          npm install
+          npx playwright install chromium --with-deps
+
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'radadigital-mvp'
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_XXXX }}
-          # AQUÍ ESTÁ EL CAMBIO: le decimos que suba la carpeta server
           package: './server'
-          # Configuramos la versión de Node directamente en el despliegue
-          app-settings-json: '[{"name": "WEBSITE_NODE_DEFAULT_VERSION", "value": "22.0.0"}]'
+          app-settings-json: '[{"name": "WEBSITE_NODE_DEFAULT_VERSION", "value": "22.0.0"}, {"name": "PLAYWRIGHT_BROWSERS_PATH", "value": "/home/site/playwright-browsers"}]'
